@@ -1,14 +1,15 @@
-from typing import Any, Dict, Iterable, Optional
+from collections.abc import Iterable
+from typing import Any
 
 
-def get_user_agent(headers: Dict[str, str]) -> Optional[str]:
+def get_user_agent(headers: dict[str, str]) -> str | None:
     """
     Retrieves the User-Agent from the headers dictionary.
     """
     return headers.get('User-Agent') or headers.get('user-agent')
 
 
-def get_browser(user_agent: str) -> Optional[str]:
+def get_browser(user_agent: str) -> str | None:
     """
     Determines the browser name from the User-Agent string.
     """
@@ -28,7 +29,7 @@ PASCALIZE_UPPER = {'dnt', 'rtt', 'ect'}
 
 def pascalize(name: str) -> str:
     # ignore
-    if name.startswith(':') or name.startswith('sec-ch-ua'):
+    if name.startswith((':', 'sec-ch-ua')):
         return name
     # uppercase
     if name in PASCALIZE_UPPER:
@@ -36,7 +37,7 @@ def pascalize(name: str) -> str:
     return name.title()
 
 
-def pascalize_headers(headers: Dict[str, str]) -> Dict[str, str]:
+def pascalize_headers(headers: dict[str, str]) -> dict[str, str]:
     return {pascalize(key): value for key, value in headers.items()}
 
 

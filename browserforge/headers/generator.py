@@ -1,13 +1,15 @@
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Any, Dict, Iterable, List, Literal, Optional, Tuple, Union
+from typing import Any, Literal
 
-from browserforge.bayesian_network import BayesianNetwork, get_possible_values
 from apify_fingerprint_datapoints import (
+    get_browser_helper_file,
     get_header_network,
     get_headers_order,
-    get_browser_helper_file,
     get_input_network,
 )
+
+from browserforge.bayesian_network import BayesianNetwork, get_possible_values
 
 from .utils import get_browser, get_user_agent, pascalize_headers, tuplify
 
@@ -19,7 +21,7 @@ except ImportError:
 try:
     from typing import TypeAlias  # novm
 except ImportError:
-    from typing_extensions import TypeAlias  # <3.10
+    from typing import TypeAlias  # <3.10
 
 
 """Constants"""
@@ -40,7 +42,7 @@ HTTP2_SEC_FETCH_ATTRIBUTES = {
     'sec-fetch-site': '?1',
     'sec-fetch-user': 'document',
 }
-ListOrString: TypeAlias = Union[Tuple[str, ...], List[str], str]
+ListOrString: TypeAlias = tuple[str, ...] | list[str] | str
 
 
 @dataclass
@@ -48,9 +50,9 @@ class Browser:
     """Represents a browser specification with name, min/max version, and HTTP version"""
 
     name: str
-    min_version: Optional[int] = None
-    max_version: Optional[int] = None
-    http_version: Union[str, int] = '2'
+    min_version: int | None = None
+    max_version: int | None = None
+    http_version: str | int = '2'
 
     def __post_init__(self):
         # Convert http_version to
@@ -71,8 +73,8 @@ class Browser:
 class HttpBrowserObject:
     """Represents an HTTP browser object with name, version, complete string, and HTTP version"""
 
-    name: Optional[str]
-    version: Tuple[int, ...]
+    name: str | None
+    version: tuple[int, ...]
     complete_string: str
     http_version: str
 
@@ -84,7 +86,7 @@ class HttpBrowserObject:
 class HeaderGenerator:
     """Generates HTTP headers based on a set of constraints"""
 
-    relaxation_order: Tuple[str, ...] = ('locales', 'devices', 'operatingSystems', 'browsers')
+    relaxation_order: tuple[str, ...] = ('locales', 'devices', 'operatingSystems', 'browsers')
 
     # Initialize networks
     input_generator_network = BayesianNetwork(get_input_network())
@@ -92,7 +94,7 @@ class HeaderGenerator:
 
     def __init__(
         self,
-        browser: Union[ListOrString, Iterable[Browser]] = SUPPORTED_BROWSERS,
+        browser: ListOrString | Iterable[Browser] = SUPPORTED_BROWSERS,
         os: ListOrString = SUPPORTED_OPERATING_SYSTEMS,
         device: ListOrString = SUPPORTED_DEVICES,
         locale: ListOrString = 'en-US',
@@ -127,14 +129,14 @@ class HeaderGenerator:
     def generate(
         self,
         *,
-        browser: Optional[Iterable[Union[str, Browser]]] = None,
-        os: Optional[ListOrString] = None,
-        device: Optional[ListOrString] = None,
-        locale: Optional[ListOrString] = None,
-        http_version: Optional[Literal[1, 2]] = None,
-        user_agent: Optional[ListOrString] = None,
-        strict: Optional[bool] = None,
-        request_dependent_headers: Optional[Dict[str, str]] = None,
+        browser: Iterable[str | Browser] | None = None,
+        os: ListOrString | None = None,
+        device: ListOrString | None = None,
+        locale: ListOrString | None = None,
+        http_version: Literal[1, 2] | None = None,
+        user_agent: ListOrString | None = None,
+        strict: bool | None = None,
+        request_dependent_headers: dict[str, str] | None = None,
     ):
         """
         Generates headers using the default options and their possible overrides.
@@ -160,7 +162,7 @@ class HeaderGenerator:
             'user_agent': tuplify(user_agent),
             'request_dependent_headers': request_dependent_headers,
         }
-        generated: Dict[str, str] = self._get_headers(
+        generated: dict[str, str] = self._get_headers(
             **{k: v for k, v in options.items() if v is not None}
         )
         if (options['http_version'] or self.options['http_version']) == '2':
@@ -169,10 +171,10 @@ class HeaderGenerator:
 
     def _get_headers(
         self,
-        request_dependent_headers: Optional[Dict[str, str]] = None,
-        user_agent: Optional[Iterable[str]] = None,
+        request_dependent_headers: dict[str, str] | None = None,
+        user_agent: Iterable[str] | None = None,
         **options: Any,
-    ) -> Dict[str, str]:
+    ) -> dict[str, str]:
         """
         Generates HTTP headers based on the given constraints.
 
@@ -272,7 +274,7 @@ class HeaderGenerator:
 
     def _update_http_version(
         self,
-        options: Dict[str, Any],
+        options: dict[str, Any],
     ):
         """
         Prepares options when a `browsers` or `http_version` kwarg is passed to .generate.
@@ -304,8 +306,8 @@ class HeaderGenerator:
             ]
 
     def _prepare_browsers_config(
-        self, browsers: Iterable[Union[str, Browser]], http_version: str
-    ) -> List[Browser]:
+        self, browsers: Iterable[str | Browser], http_version: str
+    ) -> list[Browser]:
         """
         Prepares the browser configuration based on the given browsers and HTTP version.
 
@@ -325,7 +327,7 @@ class HeaderGenerator:
             for browser in browsers
         ]
 
-    def _get_browser_http_options(self, browsers: Iterable[Browser]) -> List[str]:
+    def _get_browser_http_options(self, browsers: Iterable[Browser]) -> list[str]:
         """
         Retrieves the browser HTTP options based on the given browser specifications.
 
@@ -345,7 +347,7 @@ class HeaderGenerator:
             and (not browser.http_version or browser.http_version == browser_option.http_version)
         ]
 
-    def order_headers(self, headers: Dict[str, str]) -> Dict[str, str]:
+    def order_headers(self, headers: dict[str, str]) -> dict[str, str]:
         """
         Orders the headers based on the browser-specific header order.
 
@@ -372,8 +374,8 @@ class HeaderGenerator:
         )
 
     def _get_possible_attribute_values(
-        self, header_options: Dict[str, Any]
-    ) -> Dict[str, List[str]]:
+        self, header_options: dict[str, Any]
+    ) -> dict[str, list[str]]:
         """
         Retrieves the possible attribute values based on the given header options.
 
@@ -412,7 +414,7 @@ class HeaderGenerator:
             return True
         if browser.name == 'firefox' and browser.version[0] >= 90:
             return True
-        if browser.name == 'edge' and browser.version[0] >= 79:
+        if browser.name == 'edge' and browser.version[0] >= 79:  # noqa: SIM103
             return True
         return False
 
@@ -430,7 +432,7 @@ class HeaderGenerator:
             f"{locale};q={1.0 - index * 0.1:.1f}" for index, locale in enumerate(locales)
         )
 
-    def _load_headers_order(self) -> Dict[str, List[str]]:
+    def _load_headers_order(self) -> dict[str, list[str]]:
         """
         Loads the headers order from the headers-order.json file.
 
@@ -439,7 +441,7 @@ class HeaderGenerator:
         """
         return json.loads(get_headers_order().read_bytes())
 
-    def _load_unique_browsers(self) -> List[HttpBrowserObject]:
+    def _load_unique_browsers(self) -> list[HttpBrowserObject]:
         """
         Loads the unique browsers from the browser-helper-file.json file.
 
@@ -455,10 +457,10 @@ class HeaderGenerator:
 
     def _prepare_constraints(
         self,
-        possible_attribute_values: Dict[str, List[str]],
-        http1_values: Dict[str, Any],
-        http2_values: Dict[str, Any],
-    ) -> Dict[str, Iterable[str]]:
+        possible_attribute_values: dict[str, list[str]],
+        http1_values: dict[str, Any],
+        http2_values: dict[str, Any],
+    ) -> dict[str, Iterable[str]]:
         """
         Prepares the constraints for generating consistent samples.
 
@@ -486,7 +488,7 @@ class HeaderGenerator:
 
     @staticmethod
     def filter_browser_http(
-        value: str, http1_values: Dict[str, Any], http2_values: Dict[str, Any]
+        value: str, http1_values: dict[str, Any], http2_values: dict[str, Any]
     ) -> bool:
         """
         Filters the browser HTTP value based on the HTTP/1 and HTTP/2 values.
@@ -508,7 +510,7 @@ class HeaderGenerator:
 
     @staticmethod
     def filter_other_values(
-        value: str, http1_values: Dict[str, Any], http2_values: Dict[str, Any], key: str
+        value: str, http1_values: dict[str, Any], http2_values: dict[str, Any], key: str
     ) -> bool:
         """
         Filters the other attribute values based on the HTTP/1 and HTTP/2 values.

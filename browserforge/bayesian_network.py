@@ -1,7 +1,8 @@
 import random
 import zipfile
+from collections.abc import Iterable, Sequence
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, TypeVar, Union
+from typing import Any, TypeVar, Union
 
 try:
     import orjson as json
@@ -17,12 +18,12 @@ class BayesianNode:
     Implementation of a single node in a bayesian network allowing sampling from its conditional distribution
     """
 
-    def __init__(self, node_definition: Dict[str, Any]):
+    def __init__(self, node_definition: dict[str, Any]):
         self.node_definition = node_definition
 
     def get_probabilities_given_known_values(
-        self, parent_values: Dict[str, Any]
-    ) -> Dict[Any, float]:
+        self, parent_values: dict[str, Any]
+    ) -> dict[Any, float]:
         """
         Extracts unconditional probabilities of node values given the values of the parent nodes
         """
@@ -36,7 +37,7 @@ class BayesianNode:
         return probabilities
 
     def sample_random_value_from_possibilities(
-        self, possible_values: List[str], probabilities: Dict[str, float]
+        self, possible_values: list[str], probabilities: dict[str, float]
     ) -> Any:
         """
         Randomly samples from the given values using the given probabilities
@@ -52,7 +53,7 @@ class BayesianNode:
         # Default to first item
         return possible_values[0]
 
-    def sample(self, parent_values: Dict[str, Any]) -> Any:
+    def sample(self, parent_values: dict[str, Any]) -> Any:
         """
         Randomly samples from the conditional distribution of this node given values of parents
         """
@@ -63,10 +64,10 @@ class BayesianNode:
 
     def sample_according_to_restrictions(
         self,
-        parent_values: Dict[str, Any],
+        parent_values: dict[str, Any],
         value_possibilities: Iterable[str],
-        banned_values: List[str],
-    ) -> Optional[str]:
+        banned_values: list[str],
+    ) -> str | None:
         """
         Randomly samples from the conditional distribution of this node given restrictions on the possible values and the values of the parents.
         """
@@ -86,11 +87,11 @@ class BayesianNode:
         return self.node_definition['name']
 
     @property
-    def parent_names(self) -> List[str]:
+    def parent_names(self) -> list[str]:
         return self.node_definition.get('parentNames', [])
 
     @property
-    def possible_values(self) -> List[str]:
+    def possible_values(self) -> list[str]:
         return self.node_definition.get('possibleValues', [])
 
 
@@ -106,7 +107,7 @@ class BayesianNetwork:
         ]
         self.nodes_by_name = {node.name: node for node in self.nodes_in_sampling_order}
 
-    def generate_sample(self, input_values: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def generate_sample(self, input_values: dict[str, Any] | None = None) -> dict[str, Any]:
         """
         Randomly samples from the distribution represented by the bayesian network.
         """
@@ -119,8 +120,8 @@ class BayesianNetwork:
         return sample
 
     def generate_consistent_sample_when_possible(
-        self, value_possibilities: Dict[str, Iterable[str]]
-    ) -> Optional[Dict[str, Any]]:
+        self, value_possibilities: dict[str, Iterable[str]]
+    ) -> dict[str, Any] | None:
         """
         Randomly samples values from the distribution represented by the bayesian network,
         making sure the sample is consistent with the provided restrictions on value possibilities.
@@ -130,17 +131,17 @@ class BayesianNetwork:
 
     def recursively_generate_consistent_sample_when_possible(
         self,
-        sample_so_far: Dict[str, Any],
-        value_possibilities: Dict[str, Iterable[str]],
+        sample_so_far: dict[str, Any],
+        value_possibilities: dict[str, Iterable[str]],
         depth: int,
-    ) -> Optional[Dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         """
         Recursively generates a random sample consistent with the given restrictions on possible values.
         """
         if depth == len(self.nodes_in_sampling_order):
             return sample_so_far
         node = self.nodes_in_sampling_order[depth]
-        banned_values: List[str] = []
+        banned_values: list[str] = []
         sample_value = None
         while True:
             sample_value = node.sample_according_to_restrictions(
@@ -161,7 +162,7 @@ class BayesianNetwork:
         return None
 
 
-def array_intersection(a: Sequence[T], b: Sequence[T]) -> List[T]:
+def array_intersection(a: Sequence[T], b: Sequence[T]) -> list[T]:
     """
     Performs a set "intersection" on the given (flat) arrays
     """
@@ -169,7 +170,7 @@ def array_intersection(a: Sequence[T], b: Sequence[T]) -> List[T]:
     return [x for x in a if x in set_b]
 
 
-def array_zip(a: List[Tuple[T, ...]], b: List[Tuple[T, ...]]) -> List[Tuple[T, ...]]:
+def array_zip(a: list[tuple[T, ...]], b: list[tuple[T, ...]]) -> list[tuple[T, ...]]:
     """
     Combines two arrays into a single array using the set union
     Args:
@@ -181,13 +182,13 @@ def array_zip(a: List[Tuple[T, ...]], b: List[Tuple[T, ...]]) -> List[Tuple[T, .
     return [tuple(set(x).union(y)) for x, y in zip(a, b)]
 
 
-def undeeper(obj: Dict[str, Any]) -> Dict[str, Any]:
+def undeeper(obj: dict[str, Any]) -> dict[str, Any]:
     """
     Removes the "deeper/skip" structures from the conditional probability table
     """
     if not isinstance(obj, dict):
         return obj
-    result: Dict[str, Any] = {}
+    result: dict[str, Any] = {}
     for key, value in obj.items():
         if key == 'skip':
             continue
@@ -198,7 +199,7 @@ def undeeper(obj: Dict[str, Any]) -> Dict[str, Any]:
     return result
 
 
-def filter_by_last_level_keys(tree: Dict[str, Any], valid_keys: Map) -> List[Tuple[str, ...]]:
+def filter_by_last_level_keys(tree: dict[str, Any], valid_keys: Map) -> list[tuple[str, ...]]:
     r"""
     Performs DFS on the Tree and returns values of the nodes on the paths that end with the given keys
     (stored by levels - first level is the root)
@@ -211,11 +212,11 @@ def filter_by_last_level_keys(tree: Dict[str, Any], valid_keys: Map) -> List[Tup
     ```
     filter_by_last_level_keys(tree, ['4', '7']) => [[1], [2,3]]
     """
-    out: List[Tuple[str, ...]] = []
+    out: list[tuple[str, ...]] = []
 
-    def recurse(t: Dict[str, Any], vk: Union[Tuple[str, ...], List[str]], acc: List[str]) -> None:
-        for key in t.keys():
-            if not isinstance(t[key], dict) or t[key] is None:
+    def recurse(t: dict[str, Any], vk: tuple[str, ...] | list[str], acc: list[str]) -> None:
+        for key, value in t.items():
+            if not isinstance(value, dict) or value is None:
                 if key in vk:
                     nonlocal out
                     out = (
@@ -225,15 +226,15 @@ def filter_by_last_level_keys(tree: Dict[str, Any], valid_keys: Map) -> List[Tup
                     )
                 continue
             else:
-                recurse(t[key], vk, acc + [key])
+                recurse(value, vk, acc + [key])
 
     recurse(tree, valid_keys, [])
     return out
 
 
 def get_possible_values(
-    network: 'BayesianNetwork', possible_values: Dict[str, Union[Tuple[str, ...], List[str]]]
-) -> Dict[str, Sequence[str]]:
+    network: 'BayesianNetwork', possible_values: dict[str, tuple[str, ...] | list[str]]
+) -> dict[str, Sequence[str]]:
     """
     Given a `generative-bayesian-network` instance and a set of user constraints, returns an extended
     set of constraints **induced** by the original constraints and network structure
@@ -254,18 +255,18 @@ def get_possible_values(
         sets.append({**dict(zip(node.parent_names, zipped_values)), key: value})
 
     # Compute the intersection of all the possible values for each node
-    result: Dict[str, Sequence[str]] = {}
+    result: dict[str, Sequence[str]] = {}
     for set_dict in sets:
-        for key in set_dict.keys():
+        for key, value in set_dict.items():
             if key in result:
-                intersected_values = array_intersection(set_dict[key], result[key])
+                intersected_values = array_intersection(value, result[key])
                 if not intersected_values:
                     raise ValueError(
                         "The current constraints are too restrictive. No possible values can be found for the given constraints."
                     )
                 result[key] = intersected_values
             else:
-                result[key] = set_dict[key]
+                result[key] = value
 
     return result
 

@@ -1,6 +1,5 @@
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Dict, List, Optional
 
 from apify_fingerprint_datapoints import get_fingerprint_network
 
@@ -46,24 +45,24 @@ class ScreenFingerprint:
 @dataclass
 class NavigatorFingerprint:
     userAgent: str
-    userAgentData: Dict[str, str]
-    doNotTrack: Optional[str]
+    userAgentData: dict[str, str]
+    doNotTrack: str | None
     appCodeName: str
     appName: str
     appVersion: str
     oscpu: str
     webdriver: str
     language: str
-    languages: List[str]
+    languages: list[str]
     platform: str
-    deviceMemory: Optional[int]
+    deviceMemory: int | None
     hardwareConcurrency: int
     product: str
     productSub: str
     vendor: str
     vendorSub: str
     maxTouchPoints: int
-    extraProperties: Dict[str, str]
+    extraProperties: dict[str, str]
 
 
 @dataclass
@@ -78,16 +77,16 @@ class Fingerprint:
 
     screen: ScreenFingerprint
     navigator: NavigatorFingerprint
-    headers: Dict[str, str]
-    videoCodecs: Dict[str, str]
-    audioCodecs: Dict[str, str]
-    pluginsData: Dict[str, str]
-    battery: Optional[Dict[str, str]]
-    videoCard: Optional[VideoCard]
-    multimediaDevices: List[str]
-    fonts: List[str]
-    mockWebRTC: Optional[bool]
-    slim: Optional[bool]
+    headers: dict[str, str]
+    videoCodecs: dict[str, str]
+    audioCodecs: dict[str, str]
+    pluginsData: dict[str, str]
+    battery: dict[str, str] | None
+    videoCard: VideoCard | None
+    multimediaDevices: list[str]
+    fonts: list[str]
+    mockWebRTC: bool | None
+    slim: bool | None
 
     def dumps(self) -> str:
         """
@@ -104,10 +103,10 @@ class Fingerprint:
 class Screen:
     """Constrains the screen dimensions of the generated fingerprint"""
 
-    min_width: Optional[int] = None
-    max_width: Optional[int] = None
-    min_height: Optional[int] = None
-    max_height: Optional[int] = None
+    min_width: int | None = None
+    max_width: int | None = None
+    min_height: int | None = None
+    max_height: int | None = None
 
     def __post_init__(self):
         if (
@@ -134,7 +133,7 @@ class FingerprintGenerator:
 
     def __init__(
         self,
-        screen: Optional[Screen] = None,
+        screen: Screen | None = None,
         strict: bool = False,
         mock_webrtc: bool = False,
         slim: bool = False,
@@ -153,7 +152,7 @@ class FingerprintGenerator:
         self.header_generator: HeaderGenerator = HeaderGenerator(**header_kwargs)
 
         # Set default options
-        self.screen: Optional[Screen] = screen
+        self.screen: Screen | None = screen
         self.strict: bool = strict
         self.mock_webrtc: bool = mock_webrtc
         self.slim: bool = slim
@@ -161,10 +160,10 @@ class FingerprintGenerator:
     def generate(
         self,
         *,
-        screen: Optional[Screen] = None,
-        strict: Optional[bool] = None,
-        mock_webrtc: Optional[bool] = None,
-        slim: Optional[bool] = None,
+        screen: Screen | None = None,
+        strict: bool | None = None,
+        mock_webrtc: bool | None = None,
+        slim: bool | None = None,
         **header_kwargs,
     ) -> Fingerprint:
         """
@@ -178,7 +177,7 @@ class FingerprintGenerator:
             slim (bool, optional): Disables performance-heavy evasions when injecting the fingerprint. Default is False.
             **header_kwargs: Additional header generation options for HeaderGenerator.generate
         """
-        filtered_values: Dict[str, str] = {}
+        filtered_values: dict[str, str] = {}
         if header_kwargs is None:
             header_kwargs = {}
 
@@ -202,7 +201,7 @@ class FingerprintGenerator:
 
         # Generate fingerprint consistent with the generated user agent
         while True:
-            fingerprint: Optional[Dict] = (
+            fingerprint: dict | None = (
                 self.fingerprint_generator_network.generate_consistent_sample_when_possible(
                     {**filtered_values, 'userAgent': (user_agent,)}
                 )
@@ -243,8 +242,8 @@ class FingerprintGenerator:
         )
 
     def partial_csp(
-        self, strict: Optional[bool], screen: Optional[Screen], filtered_values: Dict
-    ) -> Optional[Dict]:
+        self, strict: bool | None, screen: Screen | None, filtered_values: dict
+    ) -> dict | None:
         """
         Generates partial content security policy (CSP) based on the provided options and filtered values.
 
@@ -272,7 +271,7 @@ class FingerprintGenerator:
             return get_possible_values(self.fingerprint_generator_network, filtered_values)
         except Exception as e:
             if strict:
-                raise e
+                raise e  # noqa: TRY201
             del filtered_values['screen']
         return None
 
@@ -304,7 +303,7 @@ class FingerprintGenerator:
 
     @staticmethod
     def _transform_fingerprint(
-        fingerprint: Dict, headers: Dict, mock_webrtc: bool, slim: bool
+        fingerprint: dict, headers: dict, mock_webrtc: bool, slim: bool
     ) -> Fingerprint:
         """
         Transforms fingerprint into a final dataclass instance.

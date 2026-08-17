@@ -24,7 +24,6 @@ def cli() -> None:
     BrowserForge: As of v1.2.4, model files are already bundled in their own package dependency.
     Manual downloads are no longer required.
     """
-    pass
 
 
 @cli.command(name='update')

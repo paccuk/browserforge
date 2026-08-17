@@ -1,17 +1,20 @@
-from typing import Dict, Optional
-
-from browserforge.fingerprints import Fingerprint
-from browserforge.injectors.utils import InjectFunction, _fingerprint, only_injectable_headers
 
 from playwright.async_api import Browser as AsyncBrowser
 from playwright.async_api import BrowserContext as AsyncBrowserContext
 from playwright.sync_api import Browser, BrowserContext
 
+from browserforge.fingerprints import Fingerprint
+from browserforge.injectors.utils import (
+    InjectFunction,
+    _fingerprint,
+    only_injectable_headers,
+)
+
 
 async def AsyncNewContext(
     browser: AsyncBrowser,
-    fingerprint: Optional[Fingerprint] = None,
-    fingerprint_options: Optional[Dict] = None,
+    fingerprint: Fingerprint | None = None,
+    fingerprint_options: dict | None = None,
     **context_options,
 ) -> AsyncBrowserContext:
     """
@@ -47,8 +50,8 @@ async def AsyncNewContext(
 
 def NewContext(
     browser: Browser,
-    fingerprint: Optional[Fingerprint] = None,
-    fingerprint_options: Optional[Dict] = None,
+    fingerprint: Fingerprint | None = None,
+    fingerprint_options: dict | None = None,
     **context_options,
 ) -> BrowserContext:
     """
@@ -79,7 +82,7 @@ def NewContext(
 
 def _context_options(
     fingerprint: Fingerprint,
-    options: Dict,
+    options: dict,
 ):
     """
     Builds options for new context

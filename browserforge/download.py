@@ -22,7 +22,6 @@ def DownloadIfNotExists(**flags: bool) -> None:
     As of v1.2.4, model files are included in their own Python package dependency.
     Mark as downloaded by default.
     """
-    pass
 
 
 def IsDownloaded(**flags: bool) -> bool:
@@ -39,4 +38,3 @@ def Remove() -> None:
     **DEPRECATED**
     As of v1.2.4, model files are included in their own Python package dependency.
     """
-    pass

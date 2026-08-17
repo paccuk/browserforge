@@ -1,17 +1,20 @@
 import re
-from typing import Dict, Optional
 
 from pyppeteer.browser import Browser
 from pyppeteer.page import Page
 
 from browserforge.fingerprints import Fingerprint
-from browserforge.injectors.utils import InjectFunction, _fingerprint, only_injectable_headers
+from browserforge.injectors.utils import (
+    InjectFunction,
+    _fingerprint,
+    only_injectable_headers,
+)
 
 
 async def NewPage(
     browser: Browser,
-    fingerprint: Optional[Fingerprint] = None,
-    fingerprint_options: Optional[Dict] = None,
+    fingerprint: Fingerprint | None = None,
+    fingerprint_options: dict | None = None,
 ) -> Page:
     """
     Injects a Pyppeteer browser object with a Fingerprint.

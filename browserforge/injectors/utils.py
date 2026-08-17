@@ -1,13 +1,12 @@
 import lzma
 from pathlib import Path
 from random import randrange
-from typing import Dict, Optional, Set
 
 from browserforge.fingerprints import Fingerprint, FingerprintGenerator
 
 UTILS_JS: Path = Path(__file__).parent / 'data/utils.js.xz'
 
-request_headers: Set[str] = {
+request_headers: set[str] = {
     'accept-encoding',
     'accept',
     'cache-control',
@@ -20,7 +19,7 @@ request_headers: Set[str] = {
 }
 
 
-def only_injectable_headers(headers: Dict[str, str], browser_name: str) -> Dict[str, str]:
+def only_injectable_headers(headers: dict[str, str], browser_name: str) -> dict[str, str]:
     """
     Some HTTP headers depend on the request (for example Accept (with values application/json, image/png) etc.).
     This function filters out those headers and leaves only the browser-wide ones.
@@ -30,10 +29,8 @@ def only_injectable_headers(headers: Dict[str, str], browser_name: str) -> Dict[
     # Chromium-based controlled browsers do not support `te` header.
     # Remove the `te` header if the browser is not Firefox
     if browser_name and 'firefox' not in browser_name.lower():
-        if 'te' in filtered_headers:
-            del filtered_headers['te']
-        if 'Te' in filtered_headers:
-            del filtered_headers['Te']
+        filtered_headers.pop('te', None)
+        filtered_headers.pop('Te', None)
 
     return filtered_headers
 
@@ -127,7 +124,7 @@ def utils_js() -> str:
 
 
 def _fingerprint(
-    fingerprint: Optional[Fingerprint] = None, fingerprint_options: Optional[Dict] = None
+    fingerprint: Fingerprint | None = None, fingerprint_options: dict | None = None
 ) -> Fingerprint:
     """
     Generates a fingerprint if one doesnt exist
